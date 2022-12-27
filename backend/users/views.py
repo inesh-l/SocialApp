@@ -1,22 +1,28 @@
+from django.contrib.auth import login
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer
 from django.contrib.auth.models import User
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework import generics
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+
 # Create your views here.
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['name'] = user.username
 
-class UserAPI(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_class = [AllowAny]
+        return token
 
-    @staticmethod
-    def get(request, *args, **kwargs):
-        user = User.objects.get(id=request.user.id)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 
 class RegisterAPI(generics.CreateAPIView):
@@ -24,7 +30,3 @@ class RegisterAPI(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
 
-class LoginAPI(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = LoginSerializer
-    
